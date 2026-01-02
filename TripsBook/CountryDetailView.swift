@@ -1,7 +1,291 @@
-//
-//  CountryDetailVire.swift
-//  TripsBook
-//
-//  Created by Łukasz Lenart on 02/01/2026.
-//
+import SwiftUI
 
+struct CountryDetailView: View {
+    let country: Country
+
+    @State private var selectedCategory = "Kultura" // Domyślnie wybrana Kultura
+
+    @EnvironmentObject var store: TripsStore // Potrzebne do przycisku
+    
+    // Zmienna pomocnicza do "żywego" statusu odwiedzenia (jak ustaliliśmy wcześniej)
+    var isVisited: Bool {
+        store.countries.first(where: { $0.id == country.id })?.visited ?? false
+    }
+    
+    @State private var showAddTripSheet = false
+
+    var body: some View {
+        let c = store.countryDetails.first(where: { $0.name == country.name })!
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Text(country.name)
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .padding(.leading, 20)
+                
+                // NIEBIESKA KARTA
+                VStack(alignment: .leading, spacing: 20) {
+                    HStack(spacing: 15) {
+                        Text(country.flag)
+                            .font(.system(size: 75))
+                            .cornerRadius(10)
+                            .shadow(radius: 2)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(country.name)
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.white)
+                                .italic()
+                            
+                            Text("Państwo w \(continentGram(s: country.continent))")
+                                .font(.caption)
+                                .foregroundStyle(.white.opacity(0.8))
+                        }
+                        Spacer()
+                    }
+                    
+                    // Przyciski na niebieskiej karcie
+                    HStack(spacing: 10) {
+                        // Przycisk 1: Do planu (Atrapa)
+                        Button(action: {showAddTripSheet = true}) {
+                            Label("Do planu", systemImage: "plus")
+                                .font(.subheadline.weight(.medium))
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 16)
+                                .background(.white)
+                                .foregroundStyle(.blue)
+                                .cornerRadius(20)
+                        }
+                        
+                        // Przycisk 2: Odwiedzone (Działający)
+                        Button(action: {
+                            
+                        }) {
+                            HStack {
+                                Image(systemName: isVisited ? "checkmark" : "xmark")
+                                Text(isVisited ? "Odwiedzone" : "Nieodwiedzone")
+                            }
+                            .font(.subheadline.weight(.medium))
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16)
+                            .background(.white)
+                            .foregroundStyle(isVisited ? .green : .red)
+                            .cornerRadius(20)
+                        }
+                    }
+                    
+                }
+                .padding(20)
+                .background(Color.blue)
+                .cornerRadius(20)
+                .padding(.horizontal)
+                
+                // KARTA STATYSTYK (Biała z obrysem)
+                VStack(spacing: 20) {
+                    HStack(alignment: .top) {
+                        // Kolumna Lewa
+                        VStack(alignment: .leading, spacing: 15) {
+                            statItem(title: "Stolica", value: c.capital) // Tu w przyszłości country.capital
+                            statItem(title: "Język", value: c.lang.joined(separator: ", "))     // Tu w przyszłości country.language
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        // Kolumna Prawa
+                        VStack(alignment: .leading, spacing: 15) {
+                            statItem(title: "Waluta", value: "Euro")
+                            statItem(title: "Populacja", value: numToStr(num: c.population))
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .padding(20)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                )
+                .padding(.horizontal)
+                
+                // 4. MENU KATEGORII (Kultura, Miasta...)
+
+                // ... wewnątrz body ...
+
+                // 1. ZMIENNE KATEGORIE (Pigułki)
+                HStack(spacing: 10) {
+                    // Lista nazw kategorii
+                    let categories = ["Kultura", "Miasta", "Natura"]
+                    
+                    ForEach(categories, id: \.self) { cat in
+                        categoryPill(title: cat, isSelected: selectedCategory == cat)
+                            .onTapGesture {
+                                // Po kliknięciu zmieniamy stan na wybraną kategorię
+                                withAnimation { // Opcjonalnie: animacja przejścia
+                                    selectedCategory = cat
+                                }
+                            }
+                    }
+                }
+                .padding(.horizontal)
+
+                // 2. LOGIKA WYBORU DANYCH
+                // To jest "sprytna" zmienna, która zwraca odpowiednią tablicę w zależności od wyboru
+                var itemsToShow: [Info] {
+                    switch selectedCategory {
+                    case "Miasta":
+                        return c.cities
+                    case "Natura":
+                        return c.nature
+                    default: // "Kultura"
+                        return c.culture
+                    }
+                }
+
+                // 3. LISTA ATRAKCJI (Dynamiczna pętla)
+                VStack(spacing: 15) {
+                    // Pętla ForEach wyświetli tyle kart, ile jest elementów w wybranej kategorii
+                    if itemsToShow.count == 0 {
+                        EmptyView()
+                    } else {
+                        ForEach(itemsToShow) { item in
+                            attractionCard(
+                                title: item.name,
+                                subtitle: item.description,
+                                imageName: item.imageURL,
+                                topicLink: item.wikipediaURL
+                            )
+                        }
+                    }
+
+                }
+                .padding(.horizontal)
+                .padding(.bottom, 30)
+
+                // ...
+                
+            }
+            
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showAddTripSheet) {
+            AddTripView(preselectedCountryName: country.name)
+        }
+    }
+    
+    func numToStr(num: Int) -> String {
+        if num < 1000000 && num >= 1000 {
+            return String(num/1000) + " tys."
+        } else if num < 1000000000 {
+            return String(num/1000000) + " mln."
+        } else {
+            return String(num/1000000000) + " mld."
+        }
+    }
+    
+    func continentGram(s: String) -> String {
+        switch s {
+            case "Afryka":
+                return "Afryce"
+            case "Azja":
+                return "Azji"
+            case "Europa":
+                return "Europie"
+            case "Australia":
+                return "Australii"
+            case "Ameryka Płd.":
+                return "Ameryce Południowej"
+            case "Ameryka Pół.":
+                return "Ameryce Północnej"
+            case "Antarktyda":
+                return "Antarktydzie"
+        default:
+            return ""
+        }
+    }
+    
+    // --- KOMPONENTY POMOCNICZE (Żeby nie zaśmiecać body) ---
+    
+    // Pojedyncza statystyka (np. Stolica: Tokio)
+    func statItem(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.gray)
+                .fontWeight(.medium)
+            Text(value)
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundStyle(.primary)
+        }
+    }
+    
+    // Pastylka menu (Kultura, Miasta...)
+    func categoryPill(title: String, isSelected: Bool) -> some View {
+        Text(title)
+            .font(.subheadline)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 20)
+            .background(isSelected ? Color.blue : Color.white)
+            .foregroundStyle(isSelected ? .white : .gray)
+            .cornerRadius(20)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(isSelected ? Color.blue : Color.gray.opacity(0.3), lineWidth: 1)
+            )
+    }
+    
+    // Karta atrakcji (Zdjęcie + Opis + Przycisk)
+    func attractionCard(title: String, subtitle: String, imageName: String, topicLink: String) -> some View {
+        HStack(spacing: 15) {
+            
+            // POPRAWIONA CZĘŚĆ Z OBRAZKIEM
+            AsyncImage(url: URL(string: imageName)) { phase in
+                if let image = phase.image {
+                    // Gdy zdjęcie się pobierze:
+                    image
+                        .resizable() // Pozwól na zmianę rozmiaru
+                        .scaledToFill() // Wypełnij cały kwadrat (nie rozciągaj)
+                } else if phase.error != nil {
+                    // Gdy jest błąd (zły link/brak neta):
+                    Color.red.opacity(0.2) // Czerwony placeholder
+                        .overlay(Image(systemName: "exclamationmark.triangle").foregroundColor(.red))
+                } else {
+                    // Gdy się ładuje:
+                    Color.gray.opacity(0.2) // Twój szary placeholder
+                        .overlay(ProgressView()) // Kręciołek ładowania
+                }
+            }
+            .frame(width: 80, height: 80) // Sztywny rozmiar
+            .clipShape(RoundedRectangle(cornerRadius: 12)) // Przycięcie do zaokrągleń
+            
+            // RESZTA KODU BEZ ZMIAN (jest OK)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                    .lineLimit(2) // Zabezpieczenie na długie nazwy
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.gray)
+                    .lineLimit(2)
+            }
+            
+            Spacer()
+            
+            Link("Zobacz",destination: URL(string: topicLink)!)
+            .font(.caption.weight(.bold))
+            .padding(.vertical, 6)
+            .padding(.horizontal, 12)
+            .background(Color.blue.opacity(0.1))
+            .foregroundStyle(.blue)
+            .cornerRadius(8)
+        }
+        .padding(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+        )
+    }
+}
+
+// Podgląd
+#Preview {
+    CountryDetailView(country: Country.example)
+        .environmentObject(TripsStore())
+}

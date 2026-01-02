@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct TripsBookApp: App {
+    @StateObject var store = TripsStore()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(store)
         }
     }
 }

@@ -5,6 +5,7 @@ struct AddTripView: View {
     @EnvironmentObject var store: TripsStore
     @Environment(\.dismiss) var dismiss
     var existingTrip: Trip?
+    var preselectedCountryName: String? = nil
     @State private var selectedCountry = ""
     @State private var cityInput = ""
     @State private var cities: [String] = []
@@ -17,7 +18,7 @@ struct AddTripView: View {
         !selectedCountry.isEmpty &&
         startDate <= endDate
     }
-     init(existingTrip: Trip? = nil) {
+     init(existingTrip: Trip? = nil, preselectedCountryName: String? = nil) {
         self.existingTrip = existingTrip
         if let trip = existingTrip {
             _selectedCountry = State(initialValue: trip.country)
@@ -25,6 +26,9 @@ struct AddTripView: View {
             _startDate = State(initialValue: trip.startDate)
             _endDate = State(initialValue: trip.endDate)
             _notes = State(initialValue: trip.notes)
+        } else if let countryName = preselectedCountryName {
+            _selectedCountry = State(initialValue: countryName)
+            
         }
     }
     
@@ -70,6 +74,11 @@ struct AddTripView: View {
                     TextEditor(text: $notes)
                         .frame(height: 120)
                 }
+            }
+            .onAppear {
+                    if let name = preselectedCountryName {
+                        selectedCountry = name
+                    }
             }
             
             .navigationTitle(existingTrip == nil ? "Nowa podróż" : "Edytuj podróż")
@@ -123,7 +132,8 @@ struct AddTripView: View {
             
             store.trips.append(newTrip)
         }
-        
+        store.updateTripStatuses()
+        store.updateVisitedCountries()
         store.saveTrips()
     }
     

@@ -58,6 +58,7 @@ extension HomeView {
                 title: "Odwiedzone kraje",
                 value: "\(store.countries.filter{$0.visited}.count)"
             )
+
             
             statCard(
                 title: "% świata",
