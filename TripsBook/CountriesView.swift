@@ -1,16 +1,11 @@
 import SwiftUI
 
-struct SheetConfig: Identifiable {
-    let id = UUID()
-    let country: Country?
-}
-
 struct CountriesView: View {
     @EnvironmentObject var store: TripsStore
     @State private var searchText = ""
     @State private var choosenContinent = "All"
 
-    @State private var activeSheet: SheetConfig? = nil
+     @State private var addTripRoute: AddTripRoute? = nil
     
     var filteredAndSortedCountries: [Country] {
             // 1. Filtrowanie (Kontynent + Szukanie)
@@ -32,7 +27,7 @@ struct CountriesView: View {
     var body: some View {
         NavigationStack {
             TopElement(title: "Kraje", onTapped: {
-                activeSheet = SheetConfig(country: nil)
+                 addTripRoute = .new
             })
             VStack {
                 HStack {
@@ -87,7 +82,7 @@ struct CountriesView: View {
                                 .cornerRadius(20)
                                 
                                 CountryItem(country: country, onTapped: {
-                                    activeSheet = SheetConfig(country: country)
+                                   addTripRoute = .preselected(country: country.name)
                                 })
                             }
                         }
@@ -97,8 +92,16 @@ struct CountriesView: View {
 
             }
         }
-        .sheet(item: $activeSheet) { config in
-            AddTripView(preselectedCountryName: config.country?.name)
+        .sheet(item: $addTripRoute) { route in
+            switch route {
+            case .new:
+                AddTripView()
+                    .environmentObject(store)
+                
+            case .preselected(let country):
+            AddTripView(preselectedCountryName: country)
+                    .environmentObject(store)
+            }
         }
     }
 }
