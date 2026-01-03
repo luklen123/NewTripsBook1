@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeView: View {
     
     @EnvironmentObject var store: TripsStore
+    @State private var addTripRoute: AddTripRoute? = nil
     @State private var selectedFilter = "Państwa"
     
     let filters = ["Państwa", "Kontynenty", "Miasta"]
@@ -24,6 +25,17 @@ struct HomeView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 10)
             }
+            .sheet(item: $addTripRoute) { route in
+                switch route {
+                case .new:
+                    AddTripView()
+                        .environmentObject(store)
+
+                case .preselected(let country):
+                    AddTripView(preselectedCountryName: country)
+                        .environmentObject(store)
+                }
+            }
         }
     }
 }
@@ -38,7 +50,9 @@ extension HomeView {
             
             Spacer()
             
-            Button(action: {}) {
+            Button {
+                addTripRoute = .new
+            } label: {
                 Image(systemName: "plus")
                     .font(.title3.bold())
                     .foregroundColor(.white)
