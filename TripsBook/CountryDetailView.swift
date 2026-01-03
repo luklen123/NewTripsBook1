@@ -11,16 +11,16 @@ struct CountryDetailView: View {
     var isVisited: Bool {
         store.countries.first(where: { $0.id == country.id })?.visited ?? false
     }
-    
-    @State private var showAddTripSheet = false
+    @State private var addTripRoute: AddTripRoute? = nil
 
     var body: some View {
         let c = store.countryDetails.first(where: { $0.name == country.name })!
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Text(country.name)
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                    .padding(.leading, 20)
+               
+                TopElement(title: country.name, onTapped: {
+                    addTripRoute = .preselected(country: country.name)
+                })
                 
                 // NIEBIESKA KARTA
                 VStack(alignment: .leading, spacing: 20) {
@@ -46,8 +46,8 @@ struct CountryDetailView: View {
                     
                     // Przyciski na niebieskiej karcie
                     HStack(spacing: 10) {
-                        // Przycisk 1: Do planu (Atrapa)
-                        Button(action: {showAddTripSheet = true}) {
+                        // Przycisk 1: Do planu (Działający z nową trasą)
+                        Button(action: { addTripRoute = .preselected(country: country.name) }) {
                             Label("Do planu", systemImage: "plus")
                                 .font(.subheadline.weight(.medium))
                                 .padding(.vertical, 8)
@@ -165,8 +165,14 @@ struct CountryDetailView: View {
             
         }
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showAddTripSheet) {
-            AddTripView(preselectedCountryName: country.name)
+        // ZMIANA: Nowy sposób wywoływania sheet przy użyciu AddTripRoute
+        .sheet(item: $addTripRoute) { route in
+            switch route {
+            case .new:
+                AddTripView()
+            case .preselected(let countryName):
+                AddTripView(preselectedCountryName: countryName)
+            }
         }
     }
     
