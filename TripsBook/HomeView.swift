@@ -163,8 +163,15 @@ extension HomeView {
                     DisclosureGroup(country) {
                         VStack(spacing: 14) {
                             ForEach(grouped[country]!) { trip in
-                                TripCard(trip: trip)
+                                NavigationLink {
+                                    TripDetailView(trip: trip)
+                                        .environmentObject(store)
+                                } label: {
+                                    TripCard(trip: trip)
+                                }
+                                .buttonStyle(.plain)
                             }
+
                         }
                         .padding(.top, 6)
                     }
@@ -183,7 +190,13 @@ extension HomeView {
                     DisclosureGroup(continent) {
                         VStack(spacing: 14) {
                             ForEach(grouped[continent]!) { trip in
-                                TripCard(trip: trip)
+                                NavigationLink {
+                                    TripDetailView(trip: trip)
+                                        .environmentObject(store)
+                                } label: {
+                                    TripCard(trip: trip)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.top, 6)
@@ -201,7 +214,13 @@ extension HomeView {
                     DisclosureGroup(city) {
                         VStack(spacing: 14) {
                             ForEach(tripsForCity) { trip in
-                                TripCard(trip: trip)
+                                NavigationLink {
+                                    TripDetailView(trip: trip)
+                                        .environmentObject(store)
+                                } label: {
+                                    TripCard(trip: trip)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.top, 6)
