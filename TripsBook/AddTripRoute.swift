@@ -1,3 +1,10 @@
+//
+//  AddTripRoute.swift
+//  TripsBook
+//
+//  Created by Łukasz Lenart on 08/01/2026.
+//
+
 import Foundation
 
 enum AddTripRoute: Identifiable {

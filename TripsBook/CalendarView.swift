@@ -23,39 +23,10 @@ struct CalendarView: View {
     @State private var year = 2025
     
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    
-                    // nazwa mies
-                    Text("Kalendarz \(monthName(month)) \(year)")
-                        .font(.largeTitle.bold())
-                        .padding(.top, 8)
-                    
-                    // siatka dni
-                    calendarGrid
-                    
-                    // lista podrozy - wszystko od najnowyszych? a planowane tez? czy tylko te z danego miesiaca?
-                    tripListSection
-                }
-                .padding()
-            }
-            .navigationTitle("Kalendarz")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        print("Dodaj podróż")
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.title3.bold())
-                            .foregroundColor(.white)
-                            .frame(width: 42, height: 42)
-                            .background(Color.blue)
-                            .clipShape(Circle())
-                            .shadow(color: .blue.opacity(0.3), radius: 5)
-                    }
-                }
-            }
+        VStack {
+            TopElement(title: "Kalendarz", onTapped: {})
+            CalendarContentView()
+            
         }
     }
 }
