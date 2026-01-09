@@ -19,7 +19,7 @@ struct MainTabView: View {
                     Label("Statystyki", systemImage: "chart.bar.fill")
                 }
             
-            CalendarView()
+            SafeCalendarView(currentMonth: Date())
                 .tabItem {
                     Label("Kalendarz", systemImage: "calendar")
                 }

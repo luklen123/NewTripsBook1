@@ -10,7 +10,7 @@ import UIKit // Niezbędne dla UIBezierPath
 
 
 struct CalendarEvent: Identifiable {
-    let id = UUID()
+    let id : UUID
     let title: String
     let start: Date
     let end: Date
@@ -19,8 +19,32 @@ struct CalendarEvent: Identifiable {
 
 
 struct SafeCalendarView: View {
-    let events: [CalendarEvent] // poodróże do wyświetlenia
+    
+    @EnvironmentObject var store: TripsStore
     @State var currentMonth: Date // aktualny miesiąc
+    
+    var events: [CalendarEvent] { // poodróże do wyświetlenia
+        let colors: [Color] = [.red, .blue, .green, .orange, .purple, .pink, .yellow]
+        return store.trips.enumerated().map { index, trip in
+            CalendarEvent(
+                id: trip.id,
+                title: trip.country,
+                start: trip.startDate,
+                end: trip.endDate,
+                color: colors[index % colors.count]
+            )
+        }
+        .sorted { $0.start < $1.start }
+    }
+    
+    var currentMonthTrips: [Trip] {
+        let start = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: currentMonth))!
+        let nextMonth = Calendar.current.date(byAdding: .month, value: 1, to: start)!
+        
+        return store.trips
+            .filter { $0.startDate < nextMonth && $0.endDate >= start }
+            .sorted { $0.startDate < $1.startDate}
+    }
     
     private var days: [Date] { // dni do wyświetlenia
         let calendar = Calendar(identifier: .iso8601)// ustawienie typu kalendarza
@@ -31,7 +55,7 @@ struct SafeCalendarView: View {
         }
         
         let weekdayOfFirst = calendar.component(.weekday, from: startOfMonth) // dzień tygodnia pierwszego dnia miesiąca
-        let offsetDays = weekdayOfFirst - 1 // liczba wyświetlonych dni z poprzedniego miesiąca
+        let offsetDays = (weekdayOfFirst - calendar.firstWeekday + 7) % 7 // liczba wyświetlonych dni z poprzedniego miesiąca
         
         var allDays: [Date] = [] // lista wszystkich dni do wyświetlenia
         
@@ -53,81 +77,105 @@ struct SafeCalendarView: View {
     }
 
     var body: some View {
-        VStack {
-            HStack {
-                Button { // przycisk do poprzedniego miesiąca
-                    currentMonth = Calendar.current.date(byAdding: .month, value: -1, to: currentMonth)!
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.title2)
-                }
-                
-                Spacer()
-
-                Text(currentMonth.formatted(.dateTime.month(.wide).year())) // tekst z obecnym miesiącem i rokiem
-                    .font(.title)
-                    .bold()
-
-                Spacer()
-                
-                Button { // przycisk do następnego miesiąca
-                    currentMonth = Calendar.current.date(byAdding: .month, value: 1, to: currentMonth)!
-                } label: {
-                    Image(systemName: "chevron.right")
-                        .font(.title2)
-                }
-
-            }
+        NavigationStack {
             
-            HStack { // wiersz dni tygodnia
-                ForEach(["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Niedz"], id: \.self) { day in
-                    Text(day).frame(maxWidth: .infinity).font(.caption).foregroundColor(.gray)
-                }
-            }
-
-            let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7) // siatka dni
-            
-            LazyVGrid(columns: columns, spacing: 0) { // wyświetlanie dni
-                ForEach(days, id: \.self) { date in
-                    DayCell(date: date, events: events, currentMonth: currentMonth)
+            VStack(spacing: 0) {
+                TopElement(title: "Kalendarz", onTapped: {})
+                ScrollView {
+                    VStack {
+                        HStack {
+                            Button { // przycisk do poprzedniego miesiąca
+                                currentMonth = Calendar.current.date(byAdding: .month, value: -1, to: currentMonth)!
+                            } label: {
+                                Image(systemName: "chevron.left")
+                                    .font(.title2)
+                            }
+                            
+                            Spacer()
+                            
+                            Text(currentMonth.formatted(.dateTime.month(.wide).year())) // tekst z obecnym miesiącem i rokiem
+                                .font(.title)
+                                .bold()
+                            
+                            Spacer()
+                            
+                            Button { // przycisk do następnego miesiąca
+                                currentMonth = Calendar.current.date(byAdding: .month, value: 1, to: currentMonth)!
+                            } label: {
+                                Image(systemName: "chevron.right")
+                                    .font(.title2)
+                            }
+                            
+                        }
+                        
+                        HStack { // wiersz dni tygodnia
+                            ForEach(["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Niedz"], id: \.self) { day in
+                                Text(day).frame(maxWidth: .infinity).font(.caption).foregroundColor(.gray)
+                            }
+                        }
+                        
+                        let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7) // siatka dni
+                        
+                        LazyVGrid(columns: columns, spacing: 0) { // wyświetlanie dni
+                            ForEach(days, id: \.self) { date in
+                                DayCell(date: date, events: events, currentMonth: currentMonth)
+                            }
+                        }
+                    }
+                    .padding()
+                    VStack {
+                        if currentMonthTrips.isEmpty {
+                            Text("Brak podróży w tym miesiącu.")
+                                .padding()
+                        } else {
+                            ForEach(currentMonthTrips) { trip in
+                                NavigationLink {
+                                    TripDetailView(trip: trip)
+                                        .environmentObject(store)
+                                } label: {
+                                    TripCard(trip: trip)
+                                        .padding(.horizontal)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            
+                        }
+                        
+                    }
                 }
             }
         }
-        .padding()
     }
 }
 
 
 struct DayCell: View {
-    let date: Date
-    let events: [CalendarEvent]
-    let currentMonth: Date
+    let date: Date // dzień
+    let events: [CalendarEvent] // eventy
+    let currentMonth: Date // obecnie wyświetlany miesiąc
     
-    private let calendar = Calendar.current
+    private let calendar = Calendar(identifier: .iso8601)
     
     var body: some View {
         let isCurrentMonth = calendar.isDate(date, equalTo: currentMonth, toGranularity: .month)
         
         ZStack(alignment: .top) {
-            // Tło
-            Rectangle()
-                .fill(Color.white) // Dla ciemnego trybu użyj Color(.systemBackground)
-                .frame(height: 70)
+            Rectangle() // tło
+                .fill(Color.white)
+                .frame(height: 95)
                 .border(Color.gray.opacity(0.1))
             
-            // Wydarzenia
-            VStack(spacing: 2) {
+            VStack(spacing: 2) { // nakładanie pasków eventów
                 Spacer().frame(height: 25)
                 
-                let daysEvents = events.filter { isDateInEvent(date, event: $0) }
-                
-                // Rzutowanie na Array pomaga kompilatorowi
-                ForEach(Array(daysEvents.prefix(3))) { event in
+                let daysEvents = events.filter { isDateInEvent(date, event: $0) } // wybranie eventów, które są dziś
+    
+                ForEach(Array(daysEvents.prefix(2))) { event in // rysowanie kresek
                     EventBarView(event: event, date: date)
                 }
                 
-                if daysEvents.count > 3 {
-                    Text("+\(daysEvents.count - 3) więcej")
+                if daysEvents.count > 2 { // jeśli więcej eventów wyświetlenie informacji o tym
+                    Text("+\(daysEvents.count - 2) więcej")
                         .font(.caption2)
                         .foregroundColor(.gray)
                 }
@@ -135,8 +183,7 @@ struct DayCell: View {
                 Spacer()
             }
             
-            // Numer dnia
-            Text("\(calendar.component(.day, from: date))")
+            Text("\(calendar.component(.day, from: date))") // wyświetlenie numeru dnia
                 .font(.system(size: 14))
                 .foregroundColor(isCurrentMonth ? .primary : .gray.opacity(0.5))
                 .padding(5)
@@ -144,7 +191,7 @@ struct DayCell: View {
         }
     }
     
-    private func isDateInEvent(_ date: Date, event: CalendarEvent) -> Bool {
+    private func isDateInEvent(_ date: Date, event: CalendarEvent) -> Bool { // sprawdzenie czy event jest dzis
         let startDay = calendar.startOfDay(for: event.start)
         let endDay = calendar.startOfDay(for: event.end)
         let checkDay = calendar.startOfDay(for: date)
@@ -153,40 +200,35 @@ struct DayCell: View {
     }
 }
 
-// --- 4. WIDOK PASKA (Naprawiony) ---
-
 struct EventBarView: View {
     let event: CalendarEvent
     let date: Date
-    private let calendar = Calendar.current
+    private let calendar = Calendar(identifier: .iso8601)
     
     var body: some View {
         let isStart = calendar.isDate(date, inSameDayAs: event.start)
         let isEnd = calendar.isDate(date, inSameDayAs: event.end)
         let weekday = calendar.component(.weekday, from: date)
         
-        let roundLeft = isStart || weekday == 1 // Niedziela
-        let roundRight = isEnd || weekday == 7 // Sobota
+        let roundLeft = isStart || weekday == 1 // Poniedziałek
+        let roundRight = isEnd || weekday == 7 // Niedziela
         
-        // Obliczamy rogi tutaj, aby nie męczyć kompilatora wewnątrz ViewBuilder
         var corners: UIRectCorner = []
         if roundLeft { corners.insert([.topLeft, .bottomLeft]) }
         if roundRight { corners.insert([.topRight, .bottomRight]) }
         
-        return Text(isStart || weekday == 1 ? event.title : " ")
+        return Text(isStart || weekday == 1 ? event.title : " ") // zwrocenie widoku
             .font(.caption2)
             .lineLimit(1)
             .padding(.horizontal, 4)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(event.color)
             .foregroundColor(.white)
-            .clipShape(RoundedCornerShape(radius: 4, corners: corners)) // Teraz czysto
+            .clipShape(RoundedCornerShape(radius: 10, corners: corners))
             .padding(.leading, roundLeft ? 2 : 0)
             .padding(.trailing, roundRight ? 2 : 0)
     }
 }
-
-// --- 5. EXTENSIONS I SHAPES ---
 
 struct RoundedCornerShape: Shape {
     var radius: CGFloat
@@ -202,36 +244,7 @@ struct RoundedCornerShape: Shape {
     }
 }
 
-// --- 6. GŁÓWNY WIDOK APP ---
-
-struct CalendarContentView: View {
-    static var sampleEvents: [CalendarEvent] {
-        let today = Date()
-        let cal = Calendar.current
-        // Bezpieczne tworzenie dat testowych
-        let day2 = cal.date(byAdding: .day, value: -20, to: today) ?? today
-        let day4 = cal.date(byAdding: .day, value: 4, to: today) ?? today
-        let day6 = cal.date(byAdding: .day, value: 6, to: today) ?? today
-        let day10 = cal.date(byAdding: .day, value: 10, to: today) ?? today
-        let day100 = cal.date(byAdding: .day, value: 100, to: today) ?? today
-        
-        return [
-            
-            CalendarEvent(title: "Spotkanie", start: day2, end: day10, color: .red),
-            CalendarEvent(title: "Urlop", start: today, end: day4, color: .blue),
-            CalendarEvent(title: "Projekt", start: day6, end: day100, color: .green)
-        ]
-    }
-
-    var body: some View {
-        NavigationView {
-            ScrollView {
-                SafeCalendarView(events: Self.sampleEvents, currentMonth: Date())
-            }
-        }
-    }
-}
-
 #Preview {
-    CalendarContentView()
+    SafeCalendarView(currentMonth: Date())
+        .environmentObject(TripsStore())
 }
