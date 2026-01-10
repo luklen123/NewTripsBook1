@@ -11,7 +11,7 @@ struct Trip: Identifiable, Codable {
     
     var status: TripStatus        
     var notes: String             
-    var photos: [String]          // to trzeba na macu bedzie
+    var imagesData: [Data]         // to trzeba na macu bedzie
 }
 
 enum TripStatus: String, Codable {

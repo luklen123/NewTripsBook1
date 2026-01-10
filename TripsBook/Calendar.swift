@@ -22,6 +22,8 @@ struct SafeCalendarView: View {
     
     @EnvironmentObject var store: TripsStore
     @State var currentMonth: Date // aktualny miesiąc
+    @State private var addTripRoute: AddTripRoute? = nil
+    private let calendar = Calendar(identifier: .iso8601)
     
     var events: [CalendarEvent] { // poodróże do wyświetlenia
         let colors: [Color] = [.red, .blue, .green, .orange, .purple, .pink, .yellow]
@@ -38,8 +40,8 @@ struct SafeCalendarView: View {
     }
     
     var currentMonthTrips: [Trip] {
-        let start = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: currentMonth))!
-        let nextMonth = Calendar.current.date(byAdding: .month, value: 1, to: start)!
+        let start = calendar.date(from: calendar.dateComponents([.year, .month], from: currentMonth))!
+        let nextMonth = calendar.date(byAdding: .month, value: 1, to: start)!
         
         return store.trips
             .filter { $0.startDate < nextMonth && $0.endDate >= start }
@@ -47,7 +49,6 @@ struct SafeCalendarView: View {
     }
     
     private var days: [Date] { // dni do wyświetlenia
-        let calendar = Calendar(identifier: .iso8601)// ustawienie typu kalendarza
         
         guard let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: currentMonth)), // obliczenie początku miesiąca
               let range = calendar.range(of: .day, in: .month, for: startOfMonth) else {
@@ -80,7 +81,9 @@ struct SafeCalendarView: View {
         NavigationStack {
             
             VStack(spacing: 0) {
-                TopElement(title: "Kalendarz", onTapped: {})
+                TopElement(title: "Kalendarz", onTapped: {
+                    addTripRoute = .new
+                })
                 ScrollView {
                     VStack {
                         HStack {
@@ -128,6 +131,10 @@ struct SafeCalendarView: View {
                             Text("Brak podróży w tym miesiącu.")
                                 .padding()
                         } else {
+                            Text("Podróże w tym miesiącu:")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal)
                             ForEach(currentMonthTrips) { trip in
                                 NavigationLink {
                                     TripDetailView(trip: trip)
@@ -142,8 +149,13 @@ struct SafeCalendarView: View {
                         }
                         
                     }
+                    .padding(.bottom)
                 }
             }
+        }
+        .sheet(item: $addTripRoute) { route in
+            AddTripView()
+                .environmentObject(store)
         }
     }
 }
@@ -208,7 +220,8 @@ struct EventBarView: View {
     var body: some View {
         let isStart = calendar.isDate(date, inSameDayAs: event.start)
         let isEnd = calendar.isDate(date, inSameDayAs: event.end)
-        let weekday = calendar.component(.weekday, from: date)
+        let bweekday = calendar.component(.weekday, from: date)
+        let weekday = bweekday == 1 ? 7 : bweekday - 1
         
         let roundLeft = isStart || weekday == 1 // Poniedziałek
         let roundRight = isEnd || weekday == 7 // Niedziela

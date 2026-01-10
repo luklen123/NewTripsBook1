@@ -40,8 +40,12 @@ extension TripDetailView {
             
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(trip.country)
-                        .font(.title2.bold())
+                    HStack {
+                        Text("🇯🇵")
+                        Text(trip.country)
+                            .font(.title2.bold())
+                    }
+
                     
                     Text(citiesText)
                         .font(.subheadline)
@@ -136,19 +140,23 @@ extension TripDetailView {
             Text("Zdjęcia")
                 .font(.headline)
             
-            HStack(spacing: 12) {
-                Image(systemName: "photo.on.rectangle")
-                    .font(.system(size: 28))
-                    .foregroundColor(.blue.opacity(0.6))
-                
-                Text("Miejsce na zdjęcia z podróży.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+            if !trip.imagesData.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(trip.imagesData.indices, id: \.self) { index in
+                            if let uiImage = UIImage(data: trip.imagesData[index]) {
+                                Image(uiImage: uiImage)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 220, height: 160)
+                                    .clipped()
+                                    .cornerRadius(14)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
             }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.gray.opacity(0.08))
-            .cornerRadius(14)
         }
     }
 }
@@ -226,7 +234,7 @@ extension TripDetailView {
             endDate: Calendar.current.date(byAdding: .day, value: 10, to: Date())!,
             status: .planned,
             notes: "Wycieczka do Tokio na 2 dni, do Kioto na 5 dni.",
-            photos: []
+            imagesData: []
         )
     )
     .environmentObject(TripsStore())

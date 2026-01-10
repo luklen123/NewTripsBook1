@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 struct AddTripView: View {
     
@@ -13,6 +14,10 @@ struct AddTripView: View {
     @State private var startDate = Date()
     @State private var endDate = Date()
     
+    @State private var selectedItems: [PhotosPickerItem] = []
+    @State private var images: [Image] = []
+    @State private var imagesData: [Data] = []
+    
     @State private var notes = ""
     var isFormValid: Bool {
         !selectedCountry.isEmpty &&
@@ -26,9 +31,18 @@ struct AddTripView: View {
             _startDate = State(initialValue: trip.startDate)
             _endDate = State(initialValue: trip.endDate)
             _notes = State(initialValue: trip.notes)
+            _imagesData = State(initialValue: trip.imagesData)
+            _images = State(initialValue: imagesFromDataArray(trip.imagesData))
         } else if let countryName = preselectedCountryName {
             _selectedCountry = State(initialValue: countryName)
             
+        }
+    }
+    
+    private func imagesFromDataArray(_ dataArray: [Data]) -> [Image] {
+        dataArray.compactMap {
+            guard let uiImage = UIImage(data: $0) else { return nil }
+            return Image(uiImage: uiImage)
         }
     }
     
@@ -68,6 +82,50 @@ struct AddTripView: View {
                 Section(header: Text("Daty podróży")) {
                     DatePicker("Start", selection: $startDate, displayedComponents: .date)
                     DatePicker("Koniec", selection: $endDate, displayedComponents: .date) // tu trzeba dodac sprawdza ie czy poczatek nie jest po koncu podrozy
+                }
+                
+                Section(header: Text("Trip photos")) {
+                    PhotosPicker(
+                        selection: $selectedItems,
+                        matching: .images,
+                        photoLibrary: .shared()
+                    ) {
+                        HStack {
+                            Image(systemName: "photo.on.rectangle")
+                            Text("Add photos")
+                        }
+                    }
+                    .onChange(of: selectedItems) { newItems in
+                        Task {
+                            for item in newItems {
+                                if let data = try? await item.loadTransferable(type: Data.self),
+                                   let uiImage = UIImage(data: data) {
+
+                                    imagesData.append(data)
+                                    images.append(Image(uiImage: uiImage))
+                                }
+                            }
+
+                            selectedItems.removeAll() // reset pickera
+                        }
+                    }
+
+                    if !images.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(images.indices, id: \.self) { index in
+                                    images[index]
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 120, height: 120)
+                                        .clipped()
+                                        .cornerRadius(10)
+                                    
+                                }
+                            }
+                        }
+                        .frame(height: 130)
+                    }
                 }
                 
                 Section(header: Text("Notatki")) {
@@ -118,6 +176,7 @@ struct AddTripView: View {
                 store.trips[index].endDate = endDate
                 store.trips[index].notes = notes
                 store.trips[index].status = status
+                store.trips[index].imagesData = imagesData
             }
         } else { 
             let newTrip = Trip(
@@ -127,7 +186,7 @@ struct AddTripView: View {
                 endDate: endDate,
                 status: status,
                 notes: notes,
-                photos: []
+                imagesData: imagesData
             )
             
             store.trips.append(newTrip)

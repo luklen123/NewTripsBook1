@@ -5,7 +5,7 @@ struct CountriesView: View {
     @State private var searchText = ""
     @State private var choosenContinent = "All"
 
-     @State private var addTripRoute: AddTripRoute? = nil
+    @State private var addTripRoute: AddTripRoute? = nil
     
     var filteredAndSortedCountries: [Country] {
             // 1. Filtrowanie (Kontynent + Szukanie)

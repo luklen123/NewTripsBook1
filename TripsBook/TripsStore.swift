@@ -581,6 +581,12 @@ class TripsStore: ObservableObject {
         }
     }
     
+    func updateTrip(_ trip: Trip) {
+        if let index = trips.firstIndex(where: { $0.id == trip.id }) {
+            trips[index] = trip
+        }
+    }
+    
     
     // automatyczna zmiana statusu podrozy
     func updateTripStatuses() {
