@@ -76,7 +76,25 @@ struct SafeCalendarView: View {
         
         return allDays
     }
-
+    
+    func toPolish(month: String) -> String {
+        switch month {
+            case "January": return "Styczeń"
+            case "February": return "Luty"
+            case "March": return "Marzec"
+            case "April": return "Kwiecień"
+            case "May": return "Maj"
+            case "June": return "Czerwiec"
+            case "July": return "Lipiec"
+            case "August": return "Sierpień"
+            case "October": return "Październik"
+            case "November": return "Listopad"
+            case "December": return "Grudzień"
+        default:
+            return month
+        }
+    }
+    
     var body: some View {
         NavigationStack {
             
@@ -96,7 +114,7 @@ struct SafeCalendarView: View {
                             
                             Spacer()
                             
-                            Text(currentMonth.formatted(.dateTime.month(.wide).year())) // tekst z obecnym miesiącem i rokiem
+                            Text(toPolish(month: currentMonth.formatted(.dateTime.month(.wide))) + " " + currentMonth.formatted(.dateTime.year())) // tekst z obecnym miesiącem i rokiem
                                 .font(.title)
                                 .bold()
                             
