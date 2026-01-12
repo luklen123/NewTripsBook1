@@ -3,11 +3,10 @@ import SwiftUI
 struct CountryDetailView: View {
     let country: Country
 
-    @State private var selectedCategory = "Kultura" // Domyślnie wybrana Kultura
+    @State private var selectedCategory = "Kultura"
 
-    @EnvironmentObject var store: TripsStore // Potrzebne do przycisku
+    @EnvironmentObject var store: TripsStore
     
-    // Zmienna pomocnicza do "żywego" statusu odwiedzenia (jak ustaliliśmy wcześniej)
     var isVisited: Bool {
         store.countries.first(where: { $0.id == country.id })?.visited ?? false
     }
@@ -46,7 +45,7 @@ struct CountryDetailView: View {
                     
                     // Przyciski na niebieskiej karcie
                     HStack(spacing: 10) {
-                        // Przycisk 1: Do planu (Działający z nową trasą)
+
                         Button(action: { addTripRoute = .preselected(country: country.name) }) {
                             Label("Do planu", systemImage: "plus")
                                 .font(.subheadline.weight(.medium))
@@ -57,7 +56,7 @@ struct CountryDetailView: View {
                                 .cornerRadius(20)
                         }
                         
-                        // Przycisk 2: Odwiedzone (Działający)
+                        // Przycisk odwiedzone
                         Button(action: {
                             
                         }) {
@@ -80,19 +79,19 @@ struct CountryDetailView: View {
                 .cornerRadius(20)
                 .padding(.horizontal)
                 
-                // KARTA STATYSTYK (Biała z obrysem)
+                // KARTA STATYSTYK
                 VStack(spacing: 20) {
                     HStack(alignment: .top) {
                         // Kolumna Lewa
                         VStack(alignment: .leading, spacing: 15) {
                             statItem(title: "Stolica", value: c.capital) // Tu w przyszłości country.capital
-                            statItem(title: "Język", value: c.lang.joined(separator: ", "))     // Tu w przyszłości country.language
+                            statItem(title: "Język", value: c.lang.joined(separator: ", "))
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         
                         // Kolumna Prawa
                         VStack(alignment: .leading, spacing: 15) {
-                            statItem(title: "Waluta", value: "Euro")
+                            statItem(title: "Waluta", value: c.currency)
                             statItem(title: "Populacja", value: numToStr(num: c.population))
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -105,20 +104,17 @@ struct CountryDetailView: View {
                 )
                 .padding(.horizontal)
                 
-                // 4. MENU KATEGORII (Kultura, Miasta...)
 
-                // ... wewnątrz body ...
-
-                // 1. ZMIENNE KATEGORIE (Pigułki)
+                //ZMIENNE KATEGORIE
                 HStack(spacing: 10) {
-                    // Lista nazw kategorii
+                    
                     let categories = ["Kultura", "Miasta", "Natura"]
                     
                     ForEach(categories, id: \.self) { cat in
                         categoryPill(title: cat, isSelected: selectedCategory == cat)
                             .onTapGesture {
-                                // Po kliknięciu zmieniamy stan na wybraną kategorię
-                                withAnimation { // Opcjonalnie: animacja przejścia
+        
+                                withAnimation {
                                     selectedCategory = cat
                                 }
                             }
@@ -126,22 +122,20 @@ struct CountryDetailView: View {
                 }
                 .padding(.horizontal)
 
-                // 2. LOGIKA WYBORU DANYCH
-                // To jest "sprytna" zmienna, która zwraca odpowiednią tablicę w zależności od wyboru
                 var itemsToShow: [Info] {
                     switch selectedCategory {
                     case "Miasta":
                         return c.cities
                     case "Natura":
                         return c.nature
-                    default: // "Kultura"
+                    default:
                         return c.culture
                     }
                 }
 
-                // 3. LISTA ATRAKCJI (Dynamiczna pętla)
+                //LISTA ATRAKCJI
                 VStack(spacing: 15) {
-                    // Pętla ForEach wyświetli tyle kart, ile jest elementów w wybranej kategorii
+
                     if itemsToShow.count == 0 {
                         EmptyView()
                     } else {
@@ -159,13 +153,12 @@ struct CountryDetailView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 30)
 
-                // ...
                 
             }
             
         }
         .navigationBarTitleDisplayMode(.inline)
-        // ZMIANA: Nowy sposób wywoływania sheet przy użyciu AddTripRoute
+
         .sheet(item: $addTripRoute) { route in
             switch route {
             case .new:
@@ -207,9 +200,8 @@ struct CountryDetailView: View {
         }
     }
     
-    // --- KOMPONENTY POMOCNICZE (Żeby nie zaśmiecać body) ---
     
-    // Pojedyncza statystyka (np. Stolica: Tokio)
+    // Pojedyncza statystyka
     func statItem(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
@@ -222,7 +214,7 @@ struct CountryDetailView: View {
         }
     }
     
-    // Pastylka menu (Kultura, Miasta...)
+    // Pastylka menu
     func categoryPill(title: String, isSelected: Bool) -> some View {
         Text(title)
             .font(.subheadline)
@@ -237,35 +229,34 @@ struct CountryDetailView: View {
             )
     }
     
-    // Karta atrakcji (Zdjęcie + Opis + Przycisk)
+    // Karta atrakcji
     func attractionCard(title: String, subtitle: String, imageName: String, topicLink: String) -> some View {
         HStack(spacing: 15) {
             
-            // POPRAWIONA CZĘŚĆ Z OBRAZKIEM
+
             AsyncImage(url: URL(string: imageName)) { phase in
                 if let image = phase.image {
-                    // Gdy zdjęcie się pobierze:
+
                     image
-                        .resizable() // Pozwól na zmianę rozmiaru
-                        .scaledToFill() // Wypełnij cały kwadrat (nie rozciągaj)
+                        .resizable()
+                        .scaledToFill()
                 } else if phase.error != nil {
-                    // Gdy jest błąd (zły link/brak neta):
-                    Color.red.opacity(0.2) // Czerwony placeholder
-                        .overlay(Image(systemName: "exclamationmark.triangle").foregroundColor(.red))
+                    
+                    Color.gray.opacity(0.2)
+                        .overlay(Image(systemName: "exclamationmark.triangle").foregroundColor(.black))
                 } else {
-                    // Gdy się ładuje:
-                    Color.gray.opacity(0.2) // Twój szary placeholder
-                        .overlay(ProgressView()) // Kręciołek ładowania
+
+                    Color.gray.opacity(0.2)
+                        .overlay(ProgressView())
                 }
             }
-            .frame(width: 80, height: 80) // Sztywny rozmiar
-            .clipShape(RoundedRectangle(cornerRadius: 12)) // Przycięcie do zaokrągleń
+            .frame(width: 80, height: 80)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             
-            // RESZTA KODU BEZ ZMIAN (jest OK)
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline)
-                    .lineLimit(2) // Zabezpieczenie na długie nazwy
+                    .lineLimit(2)
                 Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(.gray)
@@ -290,7 +281,6 @@ struct CountryDetailView: View {
     }
 }
 
-// Podgląd
 #Preview {
     CountryDetailView(country: Country.example)
         .environmentObject(TripsStore())

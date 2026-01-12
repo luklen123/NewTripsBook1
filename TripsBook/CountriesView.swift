@@ -8,7 +8,7 @@ struct CountriesView: View {
     @State private var addTripRoute: AddTripRoute? = nil
     
     var filteredAndSortedCountries: [Country] {
-            // 1. Filtrowanie (Kontynent + Szukanie)
+   
             let filtered = store.countries.filter { country in
                 let matchesContinent = (choosenContinent == "All" || country.continent == choosenContinent)
                 let matchesSearch = searchText.isEmpty || country.name.localizedLowercase.hasPrefix(searchText.localizedLowercase)
@@ -16,7 +16,7 @@ struct CountriesView: View {
                 return matchesContinent && matchesSearch
             }
             
-            // 2. Sortowanie (Alfabetyczne z polskimi znakami)
+            
             return filtered.sorted {
                 $0.name.localizedStandardCompare($1.name) == .orderedAscending
             }
@@ -72,7 +72,7 @@ struct CountriesView: View {
                             ZStack {
                                 NavigationLink(destination: CountryDetailView(country: country)) {
                                     RoundedRectangle(cornerRadius: 20)
-                                        .fill(.white) // Kolor kafelka
+                                        .fill(.white)
                                 }
                                 .buttonStyle(.plain)
                                 .overlay(

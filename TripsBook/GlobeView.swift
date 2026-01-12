@@ -31,7 +31,7 @@ struct MapboxGlobeWrapper: UIViewControllerRepresentable {
     @Binding var mapViewController: MapViewController?
     
     // 1. Tu odbieramy dane ze środowiska SwiftUI
-    // Jak tylko coś się tu zmieni (dodasz podróż), SwiftUI odświeży ten widok
+    // Jak tylko coś się tu zmieni, SwiftUI odświeży ten widok
     @EnvironmentObject var store: TripsStore
     
     func makeUIViewController(context: Context) -> MapViewController {
@@ -44,13 +44,10 @@ struct MapboxGlobeWrapper: UIViewControllerRepresentable {
         return vc
     }
 
-    // 2. ✅ TO JEST KLUCZ DO AKTUALIZACJI
     // Ta funkcja wykonuje się za każdym razem, gdy 'store' się zmieni
     func updateUIViewController(_ uiViewController: MapViewController, context: Context) {
-        // Aktualizujemy store w kontrolerze (na wszelki wypadek)
         uiViewController.store = store
         
-        // Wywołujemy odświeżenie mapy
         uiViewController.refreshMapData()
     }
 }
@@ -98,34 +95,29 @@ class MapViewController: UIViewController {
     // MARK: - String → UIColor
     func colorFromString(_ name: String) -> UIColor {
         switch name.lowercased() {
-        // Próbuje wziąć z Assets "TripOrange". Jak nie ma -> bierze zwykły .orange
+
         case "orange": return UIColor(named: "TripOrange") ?? .orange
             
-        // Próbuje wziąć z Assets "TripGreen". Jak nie ma -> bierze zwykły .green
+
         case "green": return UIColor(named: "TripGreen") ?? .green
             
         default: return .gray
         }
     }
     
-    // Funkcja pomocnicza wywoływana przez SwiftUI update
+
     func refreshMapData() {
-        // Jeśli styl się jeszcze nie załadował, nie rób nic (viewDidLoad to załatwi)
         guard isStyleLoaded else { return }
         addCountries()
     }
 
-    // MARK: - Główna funkcja kolorująca
     func addCountries() {
         guard let store = self.store else { return }
 
-        // 3. ✅ WAŻNE: Wyczyść stare kraje przed dodaniem nowych!
-        // Inaczej po zmianie statusu wycieczki stary kolor zostanie pod spodem.
         removeAllCountries()
 
         var countriesToDo: [String: String] = [:]
 
-        // 4. ✅ POPRAWKA: Usunąłem @State (nie wolno tego używać wewnątrz funkcji w klasie)
         let finished = store.trips.filter { $0.status == .completed }
         let planned = store.trips.filter { $0.status == .planned }
         
@@ -144,7 +136,6 @@ class MapViewController: UIViewController {
             withExtension: "geo.json"
         ) else { return }
 
-        // Źródło dodajemy tylko raz
         if !style.sourceExists(withId: sourceId) {
             var source = GeoJSONSource(id: sourceId)
             source.data = .url(url)
@@ -155,8 +146,6 @@ class MapViewController: UIViewController {
             let code = nameToCode(country)
             let uiColor = colorFromString(colorName)
 
-            // removeSingleCountry nie jest tu potrzebne bo użyliśmy removeAllCountries na górze,
-            // ale nie zaszkodzi.
             
             let fillLayerId = "layer-\(country)"
             let outlineLayerId = "outline-\(country)"
@@ -186,34 +175,253 @@ class MapViewController: UIViewController {
     }
     
     func nameToCode(_ name: String) -> String {
-        let cleanedName = name.trimmingCharacters(in: .whitespacesAndNewlines).capitalized
+   
+        let cleanedName = name.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        
         switch cleanedName {
-        case "Polska": return "POL"
-        case "Niemcy": return "DEU"
-        case "Czechy", "Republika Czeska": return "CZE"
-        case "Słowacja": return "SVK"
-        case "Ukraina": return "UKR"
-        case "Białoruś": return "BLR"
-        case "Litwa": return "LTU"
-        case "Rosja": return "RUS"
-        case "Węgry": return "HUN"
-        case "Austria": return "AUT"
-        case "Szwajcaria": return "CHE"
-        case "Francja": return "FRA"
-        case "Hiszpania": return "ESP"
-        case "Włochy": return "ITA"
-        case "Portugalia": return "PRT"
-        case "Wielka Brytania", "Anglia": return "GBR"
-        case "Szwecja": return "SWE"
-        case "Norwegia": return "NOR"
-        case "Dania": return "DNK"
-        case "Finlandia": return "FIN"
-        case "Islandia": return "ISL"
-        case "Usa", "Stany Zjednoczone": return "USA"
-        case "Kanada": return "CAN"
-        case "Chiny": return "CHN"
-        case "Japonia": return "JPN"
-        case "Australia": return "AUS"
+            
+        // A
+        case "AFGANISTAN": return "AFG"
+        case "ALBANIA": return "ALB"
+        case "ALGIERIA": return "DZA"
+        case "ANDORA": return "AND"
+        case "ANGOLA": return "AGO"
+        case "ANTIGUA I BARBUDA": return "ATG"
+        case "ARABIA SAUDYJSKA": return "SAU"
+        case "ARGENTYNA": return "ARG"
+        case "ARMENIA": return "ARM"
+        case "AUSTRALIA": return "AUS"
+        case "AUSTRIA": return "AUT"
+        case "AZERBEJDŻAN", "AZERBEJDZAN": return "AZE"
+            
+        // B
+        case "BAHAMY": return "BHS"
+        case "BAHRAJN": return "BHR"
+        case "BANGLADESZ": return "BGD"
+        case "BARBADOS": return "BRB"
+        case "BELGIA": return "BEL"
+        case "BELIZE": return "BLZ"
+        case "BENIN": return "BEN"
+        case "BHUTAN": return "BTN"
+        case "BIAŁORUŚ", "BIALORUS": return "BLR"
+        case "BIRMA", "MJANMA": return "MMR"
+        case "BOLIWIA": return "BOL"
+        case "BOŚNIA I HERCEGOWINA", "BOSNIA I HERCEGOWINA": return "BIH"
+        case "BOTSWANA": return "BWA"
+        case "BRAZYLIA": return "BRA"
+        case "BRUNEI": return "BRN"
+        case "BUŁGARIA", "BULGARIA": return "BGR"
+        case "BURKINA FASO": return "BFA"
+        case "BURUNDI": return "BDI"
+            
+        // C
+        case "CHILE": return "CHL"
+        case "CHINY": return "CHN"
+        case "CHORWACJA": return "HRV"
+        case "CYPR": return "CYP"
+        case "CZAD": return "TCD"
+        case "CZARNOGÓRA", "CZARNOGORA": return "MNE"
+        case "CZECHY", "REPUBLIKA CZESKA": return "CZE"
+            
+        // D
+        case "DANIA": return "DNK"
+        case "DEMOKRATYCZNA REPUBLIKA KONGA", "DR KONGA": return "COD"
+        case "DOMINIKA": return "DMA"
+        case "DOMINIKANA", "REPUBLIKA DOMINIKANY": return "DOM"
+        case "DŻIBUTI", "DZIBUTI": return "DJI"
+            
+        // E
+        case "EGIPT": return "EGY"
+        case "EKWADOR": return "ECU"
+        case "ERYTREA": return "ERI"
+        case "ESTONIA": return "EST"
+        case "ESWATINI", "SUAZI": return "SWZ"
+        case "ETIOPIA": return "ETH"
+            
+        // F
+        case "FIDŻI", "FIDZI": return "FJI"
+        case "FILIPINY": return "PHL"
+        case "FINLANDIA": return "FIN"
+        case "FRANCJA": return "FRA"
+            
+        // G
+        case "GABON": return "GAB"
+        case "GAMBIA": return "GMB"
+        case "GHANA": return "GHA"
+        case "GRECJA": return "GRC"
+        case "GRENADA": return "GRD"
+        case "GRUZJA": return "GEO"
+        case "GUJANA": return "GUY"
+        case "GWATEMALA": return "GTM"
+        case "GWINEA": return "GIN"
+        case "GWINEA BISSAU": return "GNB"
+        case "GWINEA RÓWNIKOWA", "GWINEA ROWNIKOWA": return "GNQ"
+            
+        // H
+        case "HAITI": return "HTI"
+        case "HISZPANIA": return "ESP"
+        case "HOLANDIA", "NIDERLANDY": return "NLD"
+        case "HONDURAS": return "HND"
+            
+        // I
+        case "INDIE": return "IND"
+        case "INDONEZJA": return "IDN"
+        case "IRAK": return "IRQ"
+        case "IRAN": return "IRN"
+        case "IRLANDIA": return "IRL"
+        case "ISLANDIA": return "ISL"
+        case "IZRAEL": return "ISR"
+            
+        // J
+        case "JAMAJKA": return "JAM"
+        case "JAPONIA": return "JPN"
+        case "JEMEN": return "YEM"
+        case "JORDANIA": return "JOR"
+            
+        // K
+        case "KAMBODŻA", "KAMBODZA": return "KHM"
+        case "KAMERUN": return "CMR"
+        case "KANADA": return "CAN"
+        case "KATAR": return "QAT"
+        case "KAZACHSTAN": return "KAZ"
+        case "KENIA": return "KEN"
+        case "KIRGISTAN": return "KGZ"
+        case "KIRIBATI": return "KIR"
+        case "KOLUMBIA": return "COL"
+        case "KOMORY": return "COM"
+        case "KONGO": return "COG"
+        case "KOREA POŁUDNIOWA", "KOREA POLUDNIOWA": return "KOR"
+        case "KOREA PÓŁNOCNA", "KOREA POLNOCNA": return "PRK"
+        case "KOSTARYKA": return "CRI"
+        case "KUBA": return "CUB"
+        case "KUWEJT": return "KWT"
+            
+        // L
+        case "LAOS": return "LAO"
+        case "LESOTHO": return "LSO"
+        case "LIBAN": return "LBN"
+        case "LIBERIA": return "LBR"
+        case "LIBIA": return "LBY"
+        case "LIECHTENSTEIN": return "LIE"
+        case "LITWA": return "LTU"
+        case "LUKSEMBURG": return "LUX"
+        case "ŁOTWA", "LOTWA": return "LVA"
+            
+        // M
+        case "MACEDONIA PÓŁNOCNA", "MACEDONIA POLNOCNA", "MACEDONIA": return "MKD"
+        case "MADAGASKAR": return "MDG"
+        case "MALAWI": return "MWI"
+        case "MALEDIWY": return "MDV"
+        case "MALEZJA": return "MYS"
+        case "MALI": return "MLI"
+        case "MALTA": return "MLT"
+        case "MAROKO": return "MAR"
+        case "MAURETANIA": return "MRT"
+        case "MAURITIUS": return "MUS"
+        case "MEKSYK": return "MEX"
+        case "MIKRONEZJA": return "FSM"
+        case "MOŁDAWIA", "MOLDAWIA": return "MDA"
+        case "MONAKO": return "MCO"
+        case "MONGOLIA": return "MNG"
+        case "MOZAMBIK": return "MOZ"
+            
+        // N
+        case "NAMIBIA": return "NAM"
+        case "NAURU": return "NRU"
+        case "NEPAL": return "NPL"
+        case "NIEMCY": return "DEU"
+        case "NIGER": return "NER"
+        case "NIGERIA": return "NGA"
+        case "NIKARAGUA": return "NIC"
+        case "NORWEGIA": return "NOR"
+        case "NOWA ZELANDIA": return "NZL"
+            
+        // O
+        case "OMAN": return "OMN"
+            
+        // P
+        case "PAKISTAN": return "PAK"
+        case "PALAU": return "PLW"
+        case "PALESTYNA": return "PSE"
+        case "PANAMA": return "PAN"
+        case "PAPUA-NOWA GWINEA", "PAPUA NOWA GWINEA": return "PNG"
+        case "PARAGWAJ": return "PRY"
+        case "PERU": return "PER"
+        case "POLSKA": return "POL"
+        case "PORTUGALIA": return "PRT"
+            
+        // R
+        case "RPA", "REPUBLIKA POŁUDNIOWEJ AFRYKI": return "ZAF"
+        case "REPUBLIKA ŚRODKOWOAFRYKAŃSKA", "RESPUBLIKA SRODKOWOAFRYKANSKA": return "CAF"
+        case "REPUBLIKA ZIELONEGO PRZYLĄDKA", "ZIELONY PRZYLĄDEK": return "CPV"
+        case "ROSJA", "FEDERACJA ROSYJSKA": return "RUS"
+        case "RUMUNIA": return "ROU"
+        case "RWANDA": return "RWA"
+            
+        // S
+        case "SAINT KITTS I NEVIS": return "KNA"
+        case "SAINT LUCIA": return "LCA"
+        case "SAINT VINCENT I GRENADYNY": return "VCT"
+        case "SALWADOR": return "SLV"
+        case "SAMOA": return "WSM"
+        case "SAN MARINO": return "SMR"
+        case "SENEGAL": return "SEN"
+        case "SERBIA": return "SRB"
+        case "SESZELE": return "SYC"
+        case "SIERRA LEONE": return "SLE"
+        case "SINGAPUR": return "SGP"
+        case "SŁOWACJA", "SLOWACJA": return "SVK"
+        case "SŁOWENIA", "SLOWENIA": return "SVN"
+        case "SOMALIA": return "SOM"
+        case "SRI LANKA": return "LKA"
+        case "STANY ZJEDNOCZONE", "USA", "AMERYKA": return "USA"
+        case "SUDAN": return "SDN"
+        case "SUDAN POŁUDNIOWY", "SUDAN POLUDNIOWY": return "SSD"
+        case "SURINAM": return "SUR"
+        case "SYRIA": return "SYR"
+        case "SZWAJCARIA": return "CHE"
+        case "SZWECJA": return "SWE"
+            
+        // T
+        case "TADŻYKISTAN", "TADZYKISTAN": return "TJK"
+        case "TAJLANDIA": return "THA"
+        case "TAJWAN": return "TWN"
+        case "TANZANIA": return "TZA"
+        case "TIMOR WSCHODNI": return "TLS"
+        case "TOGO": return "TGO"
+        case "TONGA": return "TON"
+        case "TRYNIDAD I TOBAGO": return "TTO"
+        case "TUNEZJA": return "TUN"
+        case "TURCJA": return "TUR"
+        case "TURKMENISTAN": return "TKM"
+        case "TUVALU": return "TUV"
+            
+        // U
+        case "UGANDA": return "UGA"
+        case "UKRAINA": return "UKR"
+        case "URUGWAJ": return "URY"
+        case "UZBEKISTAN": return "UZB"
+            
+        // V
+        case "VANUATU": return "VUT"
+            
+        // W
+        case "WATYKAN": return "VAT"
+        case "WENEZUELA": return "VEN"
+        case "WĘGRY", "WEGRY": return "HUN"
+        case "WIELKA BRYTANIA", "ANGLIA", "ZJEDNOCZONE KRÓLESTWO": return "GBR"
+        case "WIETNAM": return "VNM"
+        case "WŁOCHY", "WLOCHY": return "ITA"
+        case "WYBRZEŻE KOŚCI SŁONIOWEJ", "WYBRZEZE KOSCI SLONIOWEJ": return "CIV"
+        case "WYSPY MARSHALLA": return "MHL"
+        case "WYSPY SALOMONA": return "SLB"
+        case "WYSPY ŚWIĘTEGO TOMASZA I KSIĄŻĘCA": return "STP"
+            
+        // Z
+        case "ZAMBIA": return "ZMB"
+        case "ZIMBABWE": return "ZWE"
+        case "ZJEDNOCZONE EMIRATY ARABSKIE", "ZEA": return "ARE"
+            
         default: return "UNK"
         }
     }
@@ -232,7 +440,6 @@ class MapViewController: UIViewController {
     }
 }
 
-// MARK: - Preview
 #Preview {
     GlobeView()
         .environmentObject(TripsStore())

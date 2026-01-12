@@ -10,13 +10,15 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 28) {
+                VStack(spacing: 25) {
                     
                     headerSection
                     
                     statsSection
                     
-                    globeCard
+                    GlobeView()
+                        .environmentObject(store)
+                        .frame(height: 300)
                     
                     filterSection
                     
@@ -149,7 +151,7 @@ extension HomeView {
         
         let completed = store.trips.filter { $0.status == .completed }
         
-        return VStack(alignment: .leading, spacing: 20) {
+        return VStack(alignment: .leading, spacing: 5) {
             
             Text("Zakończone podróże")
                 .font(.system(size: 22, weight: .bold))
