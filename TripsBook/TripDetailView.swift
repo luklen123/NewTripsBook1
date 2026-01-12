@@ -4,7 +4,9 @@ struct TripDetailView: View {
     
     @EnvironmentObject var store: TripsStore
     let trip: Trip
-    
+    var countryFlag: String {
+        store.countries.first(where: { $0.name == trip.country })?.flag ?? "🏳️"
+    }
     @State private var showEdit = false
     @State private var showShare = false
     
@@ -41,7 +43,8 @@ extension TripDetailView {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        Text("🇯🇵")
+                        Text(countryFlag)
+                            .font(.system(size: 48))
                         Text(trip.country)
                             .font(.title2.bold())
                     }
